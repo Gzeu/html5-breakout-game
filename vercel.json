@@ -17,6 +17,10 @@
       "dest": "/$1"
     },
     {
+      "src": "/(.+)",
+      "dest": "/$1.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
@@ -39,13 +43,6 @@
           "value": "public, max-age=0, must-revalidate"
         }
       ]
-    }
-  ],
-  "functions": {},
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
     }
   ],
   "cleanUrls": true,
