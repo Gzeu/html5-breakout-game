@@ -1,4 +1,4 @@
-/* Neo Breakout - Cyberpunk Theme CSS */
+/* Neo Breakout - Cyberpunk Theme CSS with Enhanced AI Personalities */
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap');
 
 /* CSS Reset and Base */
@@ -23,6 +23,8 @@
     --text-primary: #ffffff;
     --text-secondary: #cccccc;
     --text-dim: #888888;
+    --personality-bg: rgba(0, 20, 30, 0.9);
+    --personality-border: rgba(0, 255, 255, 0.3);
 }
 
 body {
@@ -588,6 +590,116 @@ header {
     letter-spacing: 1px;
 }
 
+/* AI Personality Section */
+.ai-personality-section {
+    background: var(--personality-bg);
+    border: 1px solid var(--personality-border);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.ai-personality-section:hover {
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+    border-color: var(--neon-cyan);
+}
+
+.personality-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 15px;
+}
+
+.personality-label {
+    font-size: 0.8rem;
+    color: var(--neon-cyan);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 0 5px var(--neon-cyan);
+    white-space: nowrap;
+}
+
+.personality-selector-container {
+    flex: 1;
+    max-width: 200px;
+}
+
+.cyber-select {
+    width: 100%;
+    background: var(--darker-bg);
+    border: 1px solid var(--neon-cyan);
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: var(--text-primary);
+    font-family: 'Orbitron', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+}
+
+.cyber-select:hover {
+    border-color: var(--neon-green);
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+    background: rgba(0, 255, 255, 0.05);
+}
+
+.cyber-select:focus {
+    outline: none;
+    border-color: var(--neon-green);
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.4);
+    background: rgba(0, 255, 255, 0.1);
+}
+
+.cyber-select option {
+    background: var(--darker-bg);
+    color: var(--text-primary);
+    padding: 8px;
+    border: none;
+}
+
+.personality-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.personality-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--neon-green);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 0 8px var(--neon-green);
+    animation: personalityGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes personalityGlow {
+    0% {
+        text-shadow: 0 0 8px var(--neon-green);
+    }
+    100% {
+        text-shadow: 
+            0 0 8px var(--neon-green),
+            0 0 15px var(--neon-green),
+            0 0 25px var(--neon-green);
+    }
+}
+
+.personality-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    font-style: italic;
+}
+
 .ai-metrics {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -713,6 +825,16 @@ header {
     .neon-title {
         font-size: 2.8rem;
     }
+    
+    .personality-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .personality-selector-container {
+        max-width: 100%;
+    }
 }
 
 @media (max-width: 768px) {
@@ -747,6 +869,16 @@ header {
     
     .ai-metrics {
         grid-template-columns: 1fr;
+    }
+    
+    .personality-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .personality-selector-container {
+        max-width: 100%;
     }
     
     .footer-content {
@@ -790,6 +922,18 @@ header {
         padding: 6px;
         gap: 8px;
     }
+    
+    .ai-personality-section {
+        padding: 12px;
+    }
+    
+    .personality-name {
+        font-size: 1rem;
+    }
+    
+    .personality-description {
+        font-size: 0.8rem;
+    }
 }
 
 /* Accessibility & Performance */
@@ -809,6 +953,10 @@ header {
     }
     
     .scan-lines {
+        animation: none;
+    }
+    
+    .personality-name {
         animation: none;
     }
 }
@@ -832,7 +980,8 @@ header {
 
 /* Focus indicators */
 .cyber-btn:focus,
-.ai-toggle:focus {
+.ai-toggle:focus,
+.cyber-select:focus {
     outline: 2px solid var(--neon-cyan);
     outline-offset: 2px;
 }
@@ -860,4 +1009,30 @@ header {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Personality-specific visual enhancements */
+.ai-status-panel.personality-aggressive {
+    border-color: #ff4444;
+    box-shadow: 0 0 20px rgba(255, 68, 68, 0.2);
+}
+
+.ai-status-panel.personality-defensive {
+    border-color: #44ff44;
+    box-shadow: 0 0 20px rgba(68, 255, 68, 0.2);
+}
+
+.ai-status-panel.personality-predictive {
+    border-color: #4444ff;
+    box-shadow: 0 0 20px rgba(68, 68, 255, 0.2);
+}
+
+.ai-status-panel.personality-adaptive {
+    border-color: #ffff44;
+    box-shadow: 0 0 20px rgba(255, 255, 68, 0.2);
+}
+
+.ai-status-panel.personality-balanced {
+    border-color: var(--neon-green);
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
 }
