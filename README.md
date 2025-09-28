@@ -2,6 +2,12 @@
 
 A modern implementation of the classic Breakout game built with HTML5 Canvas, CSS3, and JavaScript. Features responsive design, smooth animations, and engaging visual effects.
 
+## 🎬 Live Preview
+
+![HTML5 Breakout Game Preview](https://html5-breakout-game.vercel.app/preview-screenshot.png)
+
+**[🎮 Play Now on Vercel](https://html5-breakout-game.vercel.app/)**
+
 ## 🎯 Features
 
 - **Pure HTML5 Canvas**: No external libraries or frameworks required
@@ -24,9 +30,11 @@ A modern implementation of the classic Breakout game built with HTML5 Canvas, CS
 ## 🚀 Getting Started
 
 ### Option 1: Play Online
-Simply open `index.html` in any modern web browser, or visit the live demo.
+
+Simply open index.html in any modern web browser, or visit the live demo.
 
 ### Option 2: Local Development
+
 ```bash
 # Clone the repository
 git clone https://github.com/Gzeu/html5-breakout-game.git
@@ -54,6 +62,7 @@ html5-breakout-game/
 ## 🛠 Technical Details
 
 ### Technologies Used
+
 - **HTML5**: Semantic structure and Canvas API
 - **CSS3**: Modern styling with flexbox, gradients, and backdrop filters
 - **JavaScript ES6+**: Game logic, physics, and DOM manipulation
@@ -77,6 +86,7 @@ html5-breakout-game/
 The game is designed to be easily customizable:
 
 ### Modify Game Parameters
+
 ```javascript
 // In game.js, adjust these variables:
 const brickRowCount = 4;        // Number of brick rows
