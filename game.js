@@ -16,12 +16,23 @@ let touchX = 0;
 let usingMouse = false;
 let highScore = localStorage.getItem('breakoutHighScore') || 0;
 
+// ====== ENHANCED FEATURES ======
+let combo = 0;
+let comboTimer = 0;
+let screenShake = 0;
+let ballTrail = [];
+
 // ====== AI CONTROL VARIABLES ======
 let aiControl = false;
 let aiTargetX = 0;
-let aiSpeed = 5; // Speed of AI paddle movement
+let aiSpeed = 5;
 let aiEnabled = false;
 let aiDecisionCallback = null;
+
+// ====== LASER SYSTEM ======
+let laserMode = false;
+let lasers = [];
+let laserCooldown = 0;
 
 // ====== AI HELPER FUNCTIONS ======
 function enableAIControl(enable = true) {
@@ -87,12 +98,14 @@ function getGameState() {
         aiControl: aiControl,
         canvas: { width: canvas.width, height: canvas.height },
         bricksRemaining: bricks.flat().filter(brick => brick.status === 1).length,
-        powerUps: powerUps.map(p => ({ x: p.x, y: p.y, effect: p.effect }))
+        powerUps: powerUps.map(p => ({ x: p.x, y: p.y, effect: p.effect })),
+        combo: combo,
+        laserMode: laserMode
     };
 }
 
 function predictBallHitPaddle() {
-    if (ball.dy > 0) { // Ball is moving down
+    if (ball.dy > 0) {
         const timeToHit = (canvas.height - ball.radius - ball.y) / ball.dy;
         const predictedX = ball.x + (ball.dx * timeToHit);
         return {
@@ -112,7 +125,6 @@ function setAIDecisionCallback(callback) {
 
 // Make functions globally available
 window.gameAPI = {
-    // Control functions
     enableAIControl,
     setAIPaddlePosition,
     setAIPaddleX,
@@ -120,13 +132,10 @@ window.gameAPI = {
     moveAIPaddleRight,
     startGameByAI,
     resetGameByAI,
-    
-    // Information functions
     getGameState,
     predictBallHitPaddle,
     setAIDecisionCallback,
     
-    // Game state
     get aiEnabled() { return aiEnabled; },
     get canvas() { return canvas; },
     get gameRunning() { return gameRunning; },
@@ -137,10 +146,10 @@ window.gameAPI = {
 const ball = {
     x: canvas.width / 2,
     y: canvas.height - 30,
-    dx: 3,
-    dy: -3,
+    dx: 3.5, // Slightly faster
+    dy: -3.5,
     radius: 8,
-    speed: 3
+    speed: 3.5
 };
 
 // Paddle properties
@@ -160,15 +169,18 @@ const brickPadding = 8;
 const brickOffsetTop = 50;
 const brickOffsetLeft = 15;
 
-// Brick colors for different rows
+// Enhanced brick colors
 const brickColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
 
-// Power-ups
+// Enhanced power-ups
 const powerUps = [];
 const powerUpTypes = {
-    MULTI_BALL: { color: '#FF6B6B', effect: 'multiBall' },
-    LARGER_PADDLE: { color: '#4ECDC4', effect: 'largerPaddle' },
-    SLOW_BALL: { color: '#45B7D1', effect: 'slowBall' }
+    MULTI_BALL: { color: '#FF6B6B', effect: 'multiBall', symbol: 'M' },
+    LARGER_PADDLE: { color: '#4ECDC4', effect: 'largerPaddle', symbol: 'L' },
+    SLOW_BALL: { color: '#45B7D1', effect: 'slowBall', symbol: 'S' },
+    LASER_PADDLE: { color: '#FF8800', effect: 'laserPaddle', symbol: '⚡' },
+    SHIELD: { color: '#9C27B0', effect: 'shield', symbol: '🛡' },
+    MAGNETIC_BALL: { color: '#00E676', effect: 'magneticBall', symbol: '🧲' }
 };
 
 // Particles for effects
@@ -198,17 +210,15 @@ canvas.addEventListener('touchstart', touchStartHandler);
 canvas.addEventListener('touchmove', touchMoveHandler);
 canvas.addEventListener('touchend', touchEndHandler);
 
-// Prevent scrolling on touch devices
 canvas.addEventListener('touchstart', e => e.preventDefault());
 canvas.addEventListener('touchmove', e => e.preventDefault());
 
-// Make canvas focusable for accessibility
 canvas.setAttribute('tabindex', '0');
 canvas.focus();
 
-// Input handlers
+// Enhanced input handlers
 function keyDownHandler(e) {
-    if (aiControl) return; // Ignore human input when AI is controlling
+    if (aiControl) return;
     
     if (e.key === 'Right' || e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
         rightPressed = true;
@@ -218,7 +228,13 @@ function keyDownHandler(e) {
         usingMouse = false;
     }
     
-    // AI toggle for testing (press 'i' to toggle AI)
+    // Laser shooting
+    if ((e.key === ' ' || e.key === 'Spacebar') && laserMode && laserCooldown <= 0) {
+        shootLaser();
+        e.preventDefault();
+    }
+    
+    // AI toggle
     if (e.key === 'i' || e.key === 'I') {
         enableAIControl(!aiControl);
         if (aiControl) {
@@ -228,7 +244,7 @@ function keyDownHandler(e) {
 }
 
 function keyUpHandler(e) {
-    if (aiControl) return; // Ignore human input when AI is controlling
+    if (aiControl) return;
     
     if (e.key === 'Right' || e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
         rightPressed = false;
@@ -238,7 +254,7 @@ function keyUpHandler(e) {
 }
 
 function mouseMoveHandler(e) {
-    if (aiControl) return; // Ignore human input when AI is controlling
+    if (aiControl) return;
     
     const rect = canvas.getBoundingClientRect();
     mouseX = e.clientX - rect.left;
@@ -246,7 +262,7 @@ function mouseMoveHandler(e) {
 }
 
 function touchStartHandler(e) {
-    if (aiControl) return; // Ignore human input when AI is controlling
+    if (aiControl) return;
     
     if (!gameStarted) {
         startGame();
@@ -254,10 +270,15 @@ function touchStartHandler(e) {
     const rect = canvas.getBoundingClientRect();
     touchX = e.touches[0].clientX - rect.left;
     usingMouse = true;
+    
+    // Touch to shoot laser
+    if (laserMode && laserCooldown <= 0) {
+        shootLaser();
+    }
 }
 
 function touchMoveHandler(e) {
-    if (aiControl) return; // Ignore human input when AI is controlling
+    if (aiControl) return;
     
     const rect = canvas.getBoundingClientRect();
     touchX = e.touches[0].clientX - rect.left;
@@ -265,8 +286,161 @@ function touchMoveHandler(e) {
 }
 
 function touchEndHandler(e) {
-    if (aiControl) return; // Ignore human input when AI is controlling
-    // Keep using mouse/touch position
+    if (aiControl) return;
+}
+
+// ====== LASER SYSTEM ======
+function shootLaser() {
+    if (laserCooldown > 0) return;
+    
+    lasers.push({
+        x: paddle.x + paddle.width / 2 - 2,
+        y: canvas.height - paddle.height - 5,
+        width: 4,
+        height: 15,
+        speed: 8
+    });
+    
+    laserCooldown = 10; // Cooldown frames
+    
+    // Create muzzle flash effect
+    createParticles(paddle.x + paddle.width / 2, canvas.height - paddle.height, '#FFFF00');
+}
+
+function updateLasers() {
+    // Update laser cooldown
+    if (laserCooldown > 0) laserCooldown--;
+    
+    // Update laser positions
+    for (let i = lasers.length - 1; i >= 0; i--) {
+        const laser = lasers[i];
+        laser.y -= laser.speed;
+        
+        // Remove lasers that are off screen
+        if (laser.y < 0) {
+            lasers.splice(i, 1);
+            continue;
+        }
+        
+        // Check collision with bricks
+        for (let c = 0; c < brickColumnCount; c++) {
+            for (let r = 0; r < brickRowCount; r++) {
+                const brick = bricks[c][r];
+                if (brick.status === 1) {
+                    if (laser.x < brick.x + brickWidth &&
+                        laser.x + laser.width > brick.x &&
+                        laser.y < brick.y + brickHeight &&
+                        laser.y + laser.height > brick.y) {
+                        
+                        // Destroy brick
+                        brick.status = 0;
+                        score += 15; // Bonus points for laser
+                        addCombo();
+                        
+                        // Create explosion effect
+                        createParticles(brick.x + brickWidth/2, brick.y + brickHeight/2, brick.color);
+                        
+                        // Remove laser
+                        lasers.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+function drawLasers() {
+    ctx.fillStyle = '#FFFF00';
+    ctx.shadowColor = '#FFFF00';
+    ctx.shadowBlur = 10;
+    
+    lasers.forEach(laser => {
+        ctx.fillRect(laser.x, laser.y, laser.width, laser.height);
+    });
+    
+    ctx.shadowBlur = 0;
+}
+
+// ====== COMBO SYSTEM ======
+function addCombo() {
+    combo++;
+    comboTimer = 120; // 2 seconds at 60fps
+    
+    if (combo >= 3) {
+        score += combo * 2; // Bonus points for combo
+    }
+}
+
+function updateCombo() {
+    if (comboTimer > 0) {
+        comboTimer--;
+    } else {
+        combo = 0;
+    }
+}
+
+function drawCombo() {
+    if (combo >= 3) {
+        ctx.fillStyle = '#FFD700';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`COMBO x${combo}!`, canvas.width / 2, 30);
+        
+        // Glow effect
+        ctx.shadowColor = '#FFD700';
+        ctx.shadowBlur = 5;
+        ctx.fillText(`COMBO x${combo}!`, canvas.width / 2, 30);
+        ctx.shadowBlur = 0;
+    }
+}
+
+// ====== BALL TRAIL EFFECT ======
+function updateBallTrail() {
+    // Add current ball position to trail
+    ballTrail.push({ x: ball.x, y: ball.y, alpha: 1.0 });
+    
+    // Limit trail length
+    if (ballTrail.length > 8) {
+        ballTrail.shift();
+    }
+    
+    // Fade trail
+    ballTrail.forEach((point, index) => {
+        point.alpha = (index + 1) / ballTrail.length * 0.5;
+    });
+}
+
+function drawBallTrail() {
+    ballTrail.forEach((point, index) => {
+        ctx.save();
+        ctx.globalAlpha = point.alpha;
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, ball.radius * (point.alpha + 0.3), 0, Math.PI * 2);
+        ctx.fillStyle = '#00FFFF';
+        ctx.fill();
+        ctx.restore();
+    });
+}
+
+// ====== SCREEN SHAKE EFFECT ======
+function addScreenShake(intensity = 5) {
+    screenShake = intensity;
+}
+
+function updateScreenShake() {
+    if (screenShake > 0) {
+        screenShake *= 0.9;
+        if (screenShake < 0.1) screenShake = 0;
+    }
+}
+
+function applyScreenShake() {
+    if (screenShake > 0) {
+        const shakeX = (Math.random() - 0.5) * screenShake;
+        const shakeY = (Math.random() - 0.5) * screenShake;
+        ctx.translate(shakeX, shakeY);
+    }
 }
 
 function startGame(e) {
@@ -277,17 +451,18 @@ function startGame(e) {
     }
 }
 
-// Particle system
-function createParticles(x, y, color) {
-    for (let i = 0; i < 8; i++) {
+// Enhanced particle system
+function createParticles(x, y, color, count = 8) {
+    for (let i = 0; i < count; i++) {
         particles.push({
             x: x,
             y: y,
-            dx: (Math.random() - 0.5) * 6,
-            dy: (Math.random() - 0.5) * 6,
+            dx: (Math.random() - 0.5) * 8,
+            dy: (Math.random() - 0.5) * 8,
             color: color,
-            life: 30,
-            maxLife: 30
+            life: 40,
+            maxLife: 40,
+            size: Math.random() * 4 + 2
         });
     }
 }
@@ -297,6 +472,8 @@ function updateParticles() {
         const particle = particles[i];
         particle.x += particle.dx;
         particle.y += particle.dy;
+        particle.dx *= 0.98; // Friction
+        particle.dy *= 0.98;
         particle.life--;
         
         if (particle.life <= 0) {
@@ -311,17 +488,16 @@ function drawParticles() {
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.fillStyle = particle.color;
-        ctx.fillRect(particle.x, particle.y, 3, 3);
+        ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
         ctx.restore();
     });
 }
 
-// Drawing functions
+// Enhanced drawing functions
 function drawBall() {
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
     
-    // Create gradient for ball
     const gradient = ctx.createRadialGradient(ball.x - 3, ball.y - 3, 0, ball.x, ball.y, ball.radius);
     gradient.addColorStop(0, '#FFE082');
     gradient.addColorStop(1, '#FF8F00');
@@ -330,21 +506,25 @@ function drawBall() {
     ctx.fill();
     ctx.closePath();
     
-    // Add ball outline
+    // Enhanced glow effect
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
     ctx.strokeStyle = '#FF6F00';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 2;
+    ctx.shadowColor = '#FFE082';
+    ctx.shadowBlur = 10;
     ctx.stroke();
+    ctx.shadowBlur = 0;
     ctx.closePath();
 }
 
 function drawPaddle() {
-    // Draw paddle with gradient
     const gradient = ctx.createLinearGradient(paddle.x, canvas.height - paddle.height, paddle.x, canvas.height);
     
-    // Different color when AI is controlling
-    if (aiControl) {
+    if (laserMode) {
+        gradient.addColorStop(0, '#FF8800'); // Orange for laser mode
+        gradient.addColorStop(1, '#FF6600');
+    } else if (aiControl) {
         gradient.addColorStop(0, '#E91E63'); // Pink for AI
         gradient.addColorStop(1, '#AD1457');
     } else {
@@ -355,16 +535,19 @@ function drawPaddle() {
     ctx.fillStyle = gradient;
     ctx.fillRect(paddle.x, canvas.height - paddle.height, paddle.width, paddle.height);
     
-    // Add paddle outline
-    ctx.strokeStyle = aiControl ? '#880E4F' : '#1565C0';
+    // Enhanced outline
+    ctx.strokeStyle = laserMode ? '#FF4400' : aiControl ? '#880E4F' : '#1565C0';
     ctx.lineWidth = 2;
     ctx.strokeRect(paddle.x, canvas.height - paddle.height, paddle.width, paddle.height);
     
-    // Add AI indicator
-    if (aiControl) {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = '8px Arial';
-        ctx.textAlign = 'center';
+    // Status indicators
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '8px Arial';
+    ctx.textAlign = 'center';
+    
+    if (laserMode) {
+        ctx.fillText('⚡', paddle.x + paddle.width/2, canvas.height - paddle.height/2 + 2);
+    } else if (aiControl) {
         ctx.fillText('AI', paddle.x + paddle.width/2, canvas.height - paddle.height/2 + 2);
     }
 }
@@ -379,7 +562,6 @@ function drawBricks() {
                 bricks[c][r].x = brickX;
                 bricks[c][r].y = brickY;
                 
-                // Draw brick with gradient effect
                 const gradient = ctx.createLinearGradient(brickX, brickY, brickX, brickY + brickHeight);
                 const baseColor = bricks[c][r].color;
                 gradient.addColorStop(0, baseColor);
@@ -388,8 +570,8 @@ function drawBricks() {
                 ctx.fillStyle = gradient;
                 ctx.fillRect(brickX, brickY, brickWidth, brickHeight);
                 
-                // Add brick outline
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                // Enhanced outline with glow
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
                 ctx.lineWidth = 1;
                 ctx.strokeRect(brickX, brickY, brickWidth, brickHeight);
             }
@@ -399,17 +581,27 @@ function drawBricks() {
 
 function drawPowerUps() {
     powerUps.forEach(powerUp => {
+        // Animated power-up with rotation
+        ctx.save();
+        ctx.translate(powerUp.x + 10, powerUp.y + 10);
+        ctx.rotate(Date.now() * 0.005);
+        
         ctx.fillStyle = powerUp.color;
-        ctx.fillRect(powerUp.x, powerUp.y, 20, 20);
+        ctx.fillRect(-10, -10, 20, 20);
+        
         ctx.strokeStyle = '#FFF';
         ctx.lineWidth = 2;
-        ctx.strokeRect(powerUp.x, powerUp.y, 20, 20);
+        ctx.strokeRect(-10, -10, 20, 20);
         
-        // Draw power-up symbol
+        // Glow effect
+        ctx.shadowColor = powerUp.color;
+        ctx.shadowBlur = 10;
         ctx.fillStyle = '#FFF';
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(powerUp.symbol, powerUp.x + 10, powerUp.y + 14);
+        ctx.fillText(powerUp.symbol, 0, 4);
+        
+        ctx.restore();
     });
 }
 
@@ -428,7 +620,7 @@ function drawStartScreen() {
         ctx.fillStyle = '#FFE082';
         ctx.font = '24px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('BREAKOUT GAME', canvas.width / 2, canvas.height / 2 - 60);
+        ctx.fillText('ENHANCED BREAKOUT', canvas.width / 2, canvas.height / 2 - 60);
         
         ctx.fillStyle = '#FFFFFF';
         ctx.font = '16px Arial';
@@ -438,23 +630,22 @@ function drawStartScreen() {
         ctx.font = '12px Arial';
         ctx.fillText('Use ← → arrows, A/D keys, or mouse/touch to move', canvas.width / 2, canvas.height / 2 + 10);
         ctx.fillText('Press I to toggle AI control', canvas.width / 2, canvas.height / 2 + 25);
+        ctx.fillText('Space/Tap to shoot when laser mode is active', canvas.width / 2, canvas.height / 2 + 40);
         
         if (highScore > 0) {
             ctx.fillStyle = '#FFE082';
             ctx.font = '14px Arial';
-            ctx.fillText(`High Score: ${highScore}`, canvas.width / 2, canvas.height / 2 + 50);
+            ctx.fillText(`High Score: ${highScore}`, canvas.width / 2, canvas.height / 2 + 65);
         }
         
-        // AI Control indicator
         if (aiControl) {
             ctx.fillStyle = '#E91E63';
             ctx.font = '14px Arial';
-            ctx.fillText('🤖 AI CONTROL ENABLED', canvas.width / 2, canvas.height / 2 + 75);
+            ctx.fillText('🤖 AI CONTROL ENABLED', canvas.width / 2, canvas.height / 2 + 85);
         }
     }
 }
 
-// Utility functions
 function darkenColor(color, percent) {
     const num = parseInt(color.replace('#', ''), 16);
     const amt = Math.round(2.55 * percent);
@@ -466,7 +657,7 @@ function darkenColor(color, percent) {
         (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
 }
 
-// Collision detection
+// Enhanced collision detection
 function collisionDetection() {
     for (let c = 0; c < brickColumnCount; c++) {
         for (let r = 0; r < brickRowCount; r++) {
@@ -477,27 +668,30 @@ function collisionDetection() {
                     ball.dy = -ball.dy;
                     b.status = 0;
                     score += 10;
+                    addCombo();
+                    addScreenShake(3);
                     
-                    // Create particle effect
-                    createParticles(b.x + brickWidth/2, b.y + brickHeight/2, b.color);
+                    // Enhanced particle effect
+                    createParticles(b.x + brickWidth/2, b.y + brickHeight/2, b.color, 12);
                     
-                    // Chance to spawn power-up
-                    if (Math.random() < 0.15) {
-                        const powerUpType = Object.values(powerUpTypes)[Math.floor(Math.random() * Object.values(powerUpTypes).length)];
+                    // Enhanced power-up spawn chance
+                    if (Math.random() < 0.2) {
+                        const powerUpTypes_array = Object.values(powerUpTypes);
+                        const powerUpType = powerUpTypes_array[Math.floor(Math.random() * powerUpTypes_array.length)];
                         powerUps.push({
                             x: b.x + brickWidth/2 - 10,
                             y: b.y + brickHeight,
                             color: powerUpType.color,
                             effect: powerUpType.effect,
-                            symbol: powerUpType.effect === 'multiBall' ? 'M' : powerUpType.effect === 'largerPaddle' ? 'L' : 'S',
+                            symbol: powerUpType.symbol,
                             dy: 2
                         });
                     }
                     
                     drawScore();
                     
-                    // Check if all bricks are destroyed
-                    if (score === brickRowCount * brickColumnCount * 10) {
+                    // Check win condition
+                    if (score >= brickRowCount * brickColumnCount * 10) {
                         if (score > highScore) {
                             highScore = score;
                             localStorage.setItem('breakoutHighScore', highScore);
@@ -520,6 +714,7 @@ function updatePowerUps() {
         if (powerUp.y + 20 > canvas.height - paddle.height &&
             powerUp.x + 20 > paddle.x && powerUp.x < paddle.x + paddle.width) {
             activatePowerUp(powerUp.effect);
+            createParticles(powerUp.x + 10, powerUp.y + 10, powerUp.color, 6);
             powerUps.splice(i, 1);
         }
         // Remove if off screen
@@ -529,25 +724,56 @@ function updatePowerUps() {
     }
 }
 
+// Enhanced power-up system
 function activatePowerUp(effect) {
     switch(effect) {
         case 'multiBall':
-            // Add two more balls (simplified implementation)
-            ball.dx *= 1.2;
-            ball.dy *= 1.2;
+            ball.dx *= 1.3;
+            ball.dy *= 1.3;
+            addScreenShake(8);
             break;
+            
         case 'largerPaddle':
-            paddle.width = Math.min(paddle.width + 20, canvas.width * 0.3);
+            paddle.width = Math.min(paddle.width + 25, canvas.width * 0.4);
             setTimeout(() => {
                 paddle.width = 80;
-            }, 10000);
+            }, 12000);
             break;
+            
         case 'slowBall':
-            ball.dx *= 0.7;
-            ball.dy *= 0.7;
+            ball.dx *= 0.6;
+            ball.dy *= 0.6;
             setTimeout(() => {
                 ball.dx = ball.dx < 0 ? -ball.speed : ball.speed;
                 ball.dy = ball.dy < 0 ? -ball.speed : ball.speed;
+            }, 10000);
+            break;
+            
+        case 'laserPaddle':
+            laserMode = true;
+            setTimeout(() => {
+                laserMode = false;
+            }, 15000);
+            break;
+            
+        case 'shield':
+            lives = Math.min(lives + 1, 5);
+            drawScore();
+            break;
+            
+        case 'magneticBall':
+            // Simplified magnetic effect - ball follows paddle slightly
+            const originalUpdate = ball.dx;
+            const magneticInterval = setInterval(() => {
+                if (ball.y > canvas.height / 2) {
+                    const paddleCenter = paddle.x + paddle.width / 2;
+                    const attraction = (paddleCenter - ball.x) * 0.002;
+                    ball.dx += attraction;
+                }
+            }, 16);
+            
+            setTimeout(() => {
+                clearInterval(magneticInterval);
             }, 8000);
             break;
     }
@@ -560,6 +786,8 @@ function showGameMessage(message, color) {
     ctx.fillStyle = color;
     ctx.font = '28px Arial';
     ctx.textAlign = 'center';
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 10;
     ctx.fillText(message, canvas.width / 2, canvas.height / 2 - 20);
     
     if (message === 'GAME OVER' && score > highScore) {
@@ -568,23 +796,24 @@ function showGameMessage(message, color) {
         ctx.fillText('NEW HIGH SCORE!', canvas.width / 2, canvas.height / 2 + 10);
     }
     
+    ctx.shadowBlur = 0;
     ctx.fillStyle = '#FFFFFF';
     ctx.font = '16px Arial';
     ctx.fillText('Click, tap, or press any key to play again', canvas.width / 2, canvas.height / 2 + 40);
 }
 
 function resetGame() {
-    // Reset ball position
+    // Reset ball
     ball.x = canvas.width / 2;
     ball.y = canvas.height - 30;
-    ball.dx = 3;
-    ball.dy = -3;
+    ball.dx = 3.5;
+    ball.dy = -3.5;
     
-    // Reset paddle position
+    // Reset paddle
     paddle.x = (canvas.width - paddle.width) / 2;
     paddle.width = 80;
     
-    // Reset AI target
+    // Reset AI
     if (aiControl) {
         aiTargetX = paddle.x;
     }
@@ -596,24 +825,36 @@ function resetGame() {
         }
     }
     
-    // Clear power-ups and particles
+    // Clear all effects
     powerUps.length = 0;
     particles.length = 0;
+    lasers.length = 0;
+    ballTrail.length = 0;
     
     // Reset game state
     if (score > highScore) {
         highScore = score;
         localStorage.setItem('breakoutHighScore', highScore);
     }
+    
     score = 0;
     lives = 3;
+    combo = 0;
+    comboTimer = 0;
+    screenShake = 0;
+    laserMode = false;
+    laserCooldown = 0;
     gameRunning = false;
     gameStarted = false;
+    
     drawScore();
 }
 
-// Main game loop
+// Enhanced main game loop
 function draw() {
+    ctx.save();
+    applyScreenShake();
+    
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -622,15 +863,17 @@ function draw() {
         drawBall();
         drawPaddle();
         drawStartScreen();
+        ctx.restore();
         requestAnimationFrame(draw);
         return;
     }
     
     if (!gameRunning) {
+        ctx.restore();
         return;
     }
     
-    // Call AI decision callback if set
+    // AI decision callback
     if (aiControl && aiDecisionCallback && typeof aiDecisionCallback === 'function') {
         try {
             aiDecisionCallback(getGameState());
@@ -639,73 +882,84 @@ function draw() {
         }
     }
     
-    // Update particles
+    // Update systems
     updateParticles();
     updatePowerUps();
+    updateLasers();
+    updateCombo();
+    updateScreenShake();
+    updateBallTrail();
     
-    // Draw game objects
+    // Draw everything
+    drawBallTrail();
     drawBricks();
     drawBall();
     drawPaddle();
     drawPowerUps();
+    drawLasers();
     drawParticles();
+    drawCombo();
+    
     collisionDetection();
     
-    // Ball physics - wall bouncing
+    // Ball physics
     if (ball.x + ball.dx > canvas.width - ball.radius || ball.x + ball.dx < ball.radius) {
         ball.dx = -ball.dx;
+        addScreenShake(2);
     }
     if (ball.y + ball.dy < ball.radius) {
         ball.dy = -ball.dy;
+        addScreenShake(2);
     } else if (ball.y + ball.dy > canvas.height - ball.radius) {
-        // Check paddle collision
+        // Enhanced paddle collision
         if (ball.x > paddle.x && ball.x < paddle.x + paddle.width) {
-            // Add some angle based on where the ball hits the paddle
             const hitPos = (ball.x - paddle.x) / paddle.width;
-            const maxAngle = Math.PI / 3; // 60 degrees max
+            const maxAngle = Math.PI / 3;
             const angle = (hitPos - 0.5) * maxAngle;
             
-            ball.dx = ball.speed * Math.sin(angle);
-            ball.dy = -ball.speed * Math.cos(angle);
+            const speed = Math.sqrt(ball.dx * ball.dx + ball.dy * ball.dy);
+            ball.dx = speed * Math.sin(angle);
+            ball.dy = -Math.abs(speed * Math.cos(angle));
+            
+            addScreenShake(4);
+            createParticles(ball.x, canvas.height - paddle.height, '#FFE082');
         } else {
             lives--;
+            combo = 0; // Reset combo on life loss
+            
             if (lives <= 0) {
-                // Game over
                 if (score > highScore) {
                     highScore = score;
                     localStorage.setItem('breakoutHighScore', highScore);
                 }
                 showGameMessage('GAME OVER', '#F44336');
                 setTimeout(() => resetGame(), 2000);
+                ctx.restore();
                 return;
             } else {
-                // Reset ball position
                 ball.x = canvas.width / 2;
                 ball.y = canvas.height - 30;
-                ball.dx = 3;
-                ball.dy = -3;
+                ball.dx = 3.5;
+                ball.dy = -3.5;
+                addScreenShake(8);
                 drawScore();
             }
         }
     }
     
-    // Paddle movement logic
+    // Enhanced paddle movement
     if (aiControl) {
-        // AI movement - smooth towards target
         const distanceToTarget = aiTargetX - paddle.x;
         if (Math.abs(distanceToTarget) > aiSpeed) {
             paddle.x += distanceToTarget > 0 ? aiSpeed : -aiSpeed;
         } else {
             paddle.x = aiTargetX;
         }
-        // Ensure paddle stays within bounds
         paddle.x = Math.max(0, Math.min(canvas.width - paddle.width, paddle.x));
     } else if (usingMouse) {
-        // Human mouse/touch control
         const targetX = (touchX || mouseX) - paddle.width / 2;
         paddle.x = Math.max(0, Math.min(canvas.width - paddle.width, targetX));
     } else {
-        // Human keyboard control
         if (rightPressed && paddle.x < canvas.width - paddle.width) {
             paddle.x += paddle.speed;
         } else if (leftPressed && paddle.x > 0) {
@@ -717,18 +971,15 @@ function draw() {
     ball.x += ball.dx;
     ball.y += ball.dy;
     
+    ctx.restore();
     requestAnimationFrame(draw);
 }
 
 // Initialize game
 draw();
 
-// Log available API for developers
-console.log('🎮 Breakout Game loaded with AI Control API');
+// Enhanced console logging
+console.log('🎮 Enhanced Breakout Game loaded!');
+console.log('New Features: Laser Paddle, Screen Shake, Ball Trail, Combo System');
 console.log('Available functions:', Object.keys(window.gameAPI));
-console.log('Example usage:');
-console.log('  gameAPI.enableAIControl(true);');
-console.log('  gameAPI.startGameByAI();');
-console.log('  gameAPI.setAIPaddleX(200);');
-console.log('  gameAPI.getGameState();');
-console.log('Press "I" key to toggle AI control manually');
+console.log('Press "I" to toggle AI control, Space/Tap to shoot lasers when active');
