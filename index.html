@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Neo Breakout - A cyberpunk-themed HTML5 game with Groq AI integration featuring advanced graphics and modern gameplay">
-    <meta name="keywords" content="neo breakout, cyberpunk game, groq ai, html5 canvas, javascript, futuristic">
+    <meta name="keywords" content="neo breakout, cyberpunk game, groq ai, html5 canvas, javascript, futuristic, ai personalities">
     <meta name="author" content="George Pricop">
-    <title>Neo Breakout - Cyberpunk Edition with Groq AI</title>
+    <title>Neo Breakout - Cyberpunk Edition with Enhanced AI</title>
     <link rel="stylesheet" href="style.css">
     
     <!-- Favicon and mobile app icons -->
@@ -15,8 +15,8 @@
     
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Neo Breakout - Cyberpunk Edition with AI">
-    <meta property="og:description" content="Experience the future of gaming with this AI-powered cyberpunk breakout game featuring neon graphics and intelligent gameplay">
+    <meta property="og:title" content="Neo Breakout - Cyberpunk Edition with Enhanced AI">
+    <meta property="og:description" content="Experience the future of gaming with this AI-powered cyberpunk breakout game featuring multiple AI personalities and intelligent gameplay">
     <meta property="og:url" content="https://html5-breakout-game.vercel.app/">
     
     <!-- Google Fonts -->
@@ -36,8 +36,8 @@
             <div class="logo-container">
                 <h1 class="neon-title">🔮 NEO BREAKOUT</h1>
                 <div class="subtitle-container">
-                    <span class="version-tag">v2.0</span>
-                    <p class="subtitle">CYBERPUNK EDITION • GROQ AI POWERED</p>
+                    <span class="version-tag">v2.1</span>
+                    <p class="subtitle">CYBERPUNK EDITION • ENHANCED AI PERSONALITIES</p>
                 </div>
             </div>
         </header>
@@ -74,7 +74,7 @@
                         <span class="btn-glow"></span>
                     </button>
                     <button class="cyber-btn secondary" id="aiBtn">
-                        <span class="btn-text">GROQ AI</span>
+                        <span class="btn-text">BALANCED AI</span>
                         <span class="btn-glow"></span>
                     </button>
                     <button class="cyber-btn tertiary" id="pauseBtn">
@@ -100,6 +100,10 @@
                     <div class="control-item">
                         <kbd class="cyber-key">I</kbd>
                         <span>AI Toggle</span>
+                    </div>
+                    <div class="control-item">
+                        <kbd class="cyber-key">P</kbd>
+                        <span>Cycle AI Personality</span>
                     </div>
                     <div class="control-item">
                         <span class="mouse-icon">🔮</span>
@@ -132,12 +136,33 @@
         
         <div class="ai-status-panel" id="aiStatusPanel">
             <div class="panel-header">
-                <h4>🤖 GROQ AI NEURAL NET</h4>
+                <h4>🤖 ENHANCED AI NEURAL NET</h4>
                 <div class="connection-status" id="connectionStatus">
                     <span class="status-dot"></span>
                     <span class="status-text">OFFLINE</span>
                 </div>
             </div>
+            
+            <!-- AI Personality Section -->
+            <div class="ai-personality-section">
+                <div class="personality-header">
+                    <span class="personality-label">AI PERSONALITY:</span>
+                    <div class="personality-selector-container">
+                        <select id="personalitySelector" class="cyber-select">
+                            <option value="balanced">Balanced</option>
+                            <option value="aggressive">Aggressive</option>
+                            <option value="defensive">Defensive</option>
+                            <option value="predictive">Predictive</option>
+                            <option value="adaptive">Adaptive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="personality-info">
+                    <span class="personality-name" id="personalityName">Balanced</span>
+                    <span class="personality-description" id="personalityDescription">Well-rounded AI behavior with moderate risk-taking</span>
+                </div>
+            </div>
+            
             <div class="ai-metrics">
                 <div class="metric">
                     <span class="metric-label">CONFIDENCE:</span>
@@ -161,7 +186,7 @@
         <footer class="cyber-footer">
             <div class="footer-content">
                 <p class="footer-text">
-                    <span class="footer-highlight">NEURAL FRAMEWORK</span> • 
+                    <span class="footer-highlight">ENHANCED NEURAL FRAMEWORK v2.1</span> • 
                     Built with quantum HTML5 • 
                     <a href="https://github.com/Gzeu/html5-breakout-game" target="_blank" rel="noopener" class="neon-link">
                         <span class="link-icon">🔗</span>
@@ -170,6 +195,7 @@
                 </p>
                 <div class="tech-stack">
                     <span class="tech-item">GROQ AI</span>
+                    <span class="tech-item">AI PERSONALITIES</span>
                     <span class="tech-item">CANVAS 2D</span>
                     <span class="tech-item">VERCEL</span>
                     <span class="tech-item">ES2024</span>
