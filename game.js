@@ -16,6 +16,123 @@ let touchX = 0;
 let usingMouse = false;
 let highScore = localStorage.getItem('breakoutHighScore') || 0;
 
+// ====== AI CONTROL VARIABLES ======
+let aiControl = false;
+let aiTargetX = 0;
+let aiSpeed = 5; // Speed of AI paddle movement
+let aiEnabled = false;
+let aiDecisionCallback = null;
+
+// ====== AI HELPER FUNCTIONS ======
+function enableAIControl(enable = true) {
+    aiControl = enable;
+    aiEnabled = enable;
+    if (enable) {
+        aiTargetX = paddle.x;
+        console.log('🤖 AI Control ENABLED');
+    } else {
+        console.log('👤 Human Control ENABLED');
+    }
+}
+
+function setAIPaddlePosition(x) {
+    if (!aiControl) {
+        console.warn('AI Control is not enabled. Call enableAIControl(true) first.');
+        return false;
+    }
+    aiTargetX = Math.max(0, Math.min(canvas.width - paddle.width, x));
+    return true;
+}
+
+function setAIPaddleX(x) {
+    return setAIPaddlePosition(x);
+}
+
+function moveAIPaddleLeft(distance = 50) {
+    if (!aiControl) return false;
+    return setAIPaddlePosition(paddle.x - distance);
+}
+
+function moveAIPaddleRight(distance = 50) {
+    if (!aiControl) return false;
+    return setAIPaddlePosition(paddle.x + distance);
+}
+
+function startGameByAI() {
+    if (!gameStarted) {
+        enableAIControl(true);
+        gameStarted = true;
+        gameRunning = true;
+        console.log('🎮 Game started by AI');
+        return true;
+    }
+    return false;
+}
+
+function resetGameByAI() {
+    resetGame();
+    console.log('🔄 Game reset by AI');
+    return true;
+}
+
+// Advanced AI functions
+function getGameState() {
+    return {
+        ball: { x: ball.x, y: ball.y, dx: ball.dx, dy: ball.dy },
+        paddle: { x: paddle.x, y: canvas.height - paddle.height, width: paddle.width },
+        score: score,
+        lives: lives,
+        gameRunning: gameRunning,
+        gameStarted: gameStarted,
+        aiControl: aiControl,
+        canvas: { width: canvas.width, height: canvas.height },
+        bricksRemaining: bricks.flat().filter(brick => brick.status === 1).length,
+        powerUps: powerUps.map(p => ({ x: p.x, y: p.y, effect: p.effect }))
+    };
+}
+
+function predictBallHitPaddle() {
+    if (ball.dy > 0) { // Ball is moving down
+        const timeToHit = (canvas.height - ball.radius - ball.y) / ball.dy;
+        const predictedX = ball.x + (ball.dx * timeToHit);
+        return {
+            willHit: true,
+            predictedX: predictedX,
+            timeToHit: timeToHit,
+            optimalPaddleX: predictedX - paddle.width / 2
+        };
+    }
+    return { willHit: false };
+}
+
+function setAIDecisionCallback(callback) {
+    aiDecisionCallback = callback;
+    console.log('🧠 AI Decision Callback set');
+}
+
+// Make functions globally available
+window.gameAPI = {
+    // Control functions
+    enableAIControl,
+    setAIPaddlePosition,
+    setAIPaddleX,
+    moveAIPaddleLeft,
+    moveAIPaddleRight,
+    startGameByAI,
+    resetGameByAI,
+    
+    // Information functions
+    getGameState,
+    predictBallHitPaddle,
+    setAIDecisionCallback,
+    
+    // Game state
+    get aiEnabled() { return aiEnabled; },
+    get canvas() { return canvas; },
+    get gameRunning() { return gameRunning; },
+    get gameStarted() { return gameStarted; }
+};
+
 // Ball properties
 const ball = {
     x: canvas.width / 2,
@@ -91,6 +208,8 @@ canvas.focus();
 
 // Input handlers
 function keyDownHandler(e) {
+    if (aiControl) return; // Ignore human input when AI is controlling
+    
     if (e.key === 'Right' || e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
         rightPressed = true;
         usingMouse = false;
@@ -98,9 +217,19 @@ function keyDownHandler(e) {
         leftPressed = true;
         usingMouse = false;
     }
+    
+    // AI toggle for testing (press 'i' to toggle AI)
+    if (e.key === 'i' || e.key === 'I') {
+        enableAIControl(!aiControl);
+        if (aiControl) {
+            aiTargetX = paddle.x;
+        }
+    }
 }
 
 function keyUpHandler(e) {
+    if (aiControl) return; // Ignore human input when AI is controlling
+    
     if (e.key === 'Right' || e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
         rightPressed = false;
     } else if (e.key === 'Left' || e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
@@ -109,12 +238,16 @@ function keyUpHandler(e) {
 }
 
 function mouseMoveHandler(e) {
+    if (aiControl) return; // Ignore human input when AI is controlling
+    
     const rect = canvas.getBoundingClientRect();
     mouseX = e.clientX - rect.left;
     usingMouse = true;
 }
 
 function touchStartHandler(e) {
+    if (aiControl) return; // Ignore human input when AI is controlling
+    
     if (!gameStarted) {
         startGame();
     }
@@ -124,12 +257,15 @@ function touchStartHandler(e) {
 }
 
 function touchMoveHandler(e) {
+    if (aiControl) return; // Ignore human input when AI is controlling
+    
     const rect = canvas.getBoundingClientRect();
     touchX = e.touches[0].clientX - rect.left;
     usingMouse = true;
 }
 
 function touchEndHandler(e) {
+    if (aiControl) return; // Ignore human input when AI is controlling
     // Keep using mouse/touch position
 }
 
@@ -206,16 +342,31 @@ function drawBall() {
 function drawPaddle() {
     // Draw paddle with gradient
     const gradient = ctx.createLinearGradient(paddle.x, canvas.height - paddle.height, paddle.x, canvas.height);
-    gradient.addColorStop(0, '#42A5F5');
-    gradient.addColorStop(1, '#1E88E5');
+    
+    // Different color when AI is controlling
+    if (aiControl) {
+        gradient.addColorStop(0, '#E91E63'); // Pink for AI
+        gradient.addColorStop(1, '#AD1457');
+    } else {
+        gradient.addColorStop(0, '#42A5F5'); // Blue for human
+        gradient.addColorStop(1, '#1E88E5');
+    }
     
     ctx.fillStyle = gradient;
     ctx.fillRect(paddle.x, canvas.height - paddle.height, paddle.width, paddle.height);
     
     // Add paddle outline
-    ctx.strokeStyle = '#1565C0';
+    ctx.strokeStyle = aiControl ? '#880E4F' : '#1565C0';
     ctx.lineWidth = 2;
     ctx.strokeRect(paddle.x, canvas.height - paddle.height, paddle.width, paddle.height);
+    
+    // Add AI indicator
+    if (aiControl) {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '8px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('AI', paddle.x + paddle.width/2, canvas.height - paddle.height/2 + 2);
+    }
 }
 
 function drawBricks() {
@@ -286,11 +437,19 @@ function drawStartScreen() {
         ctx.fillStyle = '#BBBBBB';
         ctx.font = '12px Arial';
         ctx.fillText('Use ← → arrows, A/D keys, or mouse/touch to move', canvas.width / 2, canvas.height / 2 + 10);
+        ctx.fillText('Press I to toggle AI control', canvas.width / 2, canvas.height / 2 + 25);
         
         if (highScore > 0) {
             ctx.fillStyle = '#FFE082';
             ctx.font = '14px Arial';
-            ctx.fillText(`High Score: ${highScore}`, canvas.width / 2, canvas.height / 2 + 40);
+            ctx.fillText(`High Score: ${highScore}`, canvas.width / 2, canvas.height / 2 + 50);
+        }
+        
+        // AI Control indicator
+        if (aiControl) {
+            ctx.fillStyle = '#E91E63';
+            ctx.font = '14px Arial';
+            ctx.fillText('🤖 AI CONTROL ENABLED', canvas.width / 2, canvas.height / 2 + 75);
         }
     }
 }
@@ -425,6 +584,11 @@ function resetGame() {
     paddle.x = (canvas.width - paddle.width) / 2;
     paddle.width = 80;
     
+    // Reset AI target
+    if (aiControl) {
+        aiTargetX = paddle.x;
+    }
+    
     // Reset bricks
     for (let c = 0; c < brickColumnCount; c++) {
         for (let r = 0; r < brickRowCount; r++) {
@@ -464,6 +628,15 @@ function draw() {
     
     if (!gameRunning) {
         return;
+    }
+    
+    // Call AI decision callback if set
+    if (aiControl && aiDecisionCallback && typeof aiDecisionCallback === 'function') {
+        try {
+            aiDecisionCallback(getGameState());
+        } catch (error) {
+            console.error('AI Decision Callback error:', error);
+        }
     }
     
     // Update particles
@@ -516,11 +689,23 @@ function draw() {
         }
     }
     
-    // Paddle movement
-    if (usingMouse) {
+    // Paddle movement logic
+    if (aiControl) {
+        // AI movement - smooth towards target
+        const distanceToTarget = aiTargetX - paddle.x;
+        if (Math.abs(distanceToTarget) > aiSpeed) {
+            paddle.x += distanceToTarget > 0 ? aiSpeed : -aiSpeed;
+        } else {
+            paddle.x = aiTargetX;
+        }
+        // Ensure paddle stays within bounds
+        paddle.x = Math.max(0, Math.min(canvas.width - paddle.width, paddle.x));
+    } else if (usingMouse) {
+        // Human mouse/touch control
         const targetX = (touchX || mouseX) - paddle.width / 2;
         paddle.x = Math.max(0, Math.min(canvas.width - paddle.width, targetX));
     } else {
+        // Human keyboard control
         if (rightPressed && paddle.x < canvas.width - paddle.width) {
             paddle.x += paddle.speed;
         } else if (leftPressed && paddle.x > 0) {
@@ -537,3 +722,13 @@ function draw() {
 
 // Initialize game
 draw();
+
+// Log available API for developers
+console.log('🎮 Breakout Game loaded with AI Control API');
+console.log('Available functions:', Object.keys(window.gameAPI));
+console.log('Example usage:');
+console.log('  gameAPI.enableAIControl(true);');
+console.log('  gameAPI.startGameByAI();');
+console.log('  gameAPI.setAIPaddleX(200);');
+console.log('  gameAPI.getGameState();');
+console.log('Press "I" key to toggle AI control manually');
