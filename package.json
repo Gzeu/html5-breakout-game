@@ -6,13 +6,8 @@
   "scripts": {
     "start": "python -m http.server 8000 || python3 -m http.server 8000 || npx serve .",
     "dev": "npx live-server --port=8000",
-    "build": "echo 'No build step required - static HTML/CSS/JS files'",
+    "build": "echo 'Static files ready for deployment'",
     "deploy": "vercel --prod",
-    "lint:js": "npx eslint game.js",
-    "lint:css": "npx stylelint style.css",
-    "format": "npx prettier --write *.html *.css *.js *.md",
-    "validate": "npx html-validate index.html",
-    "lighthouse": "npx lighthouse http://localhost:8000 --output html --output-path ./lighthouse-report.html",
     "test": "echo 'No tests specified yet'"
   },
   "repository": {
@@ -46,16 +41,7 @@
   },
   "homepage": "https://html5-breakout-game.vercel.app/",
   "engines": {
-    "node": ">=14.0.0"
-  },
-  "devDependencies": {
-    "eslint": "^8.0.0",
-    "html-validate": "^8.0.0",
-    "lighthouse": "^11.0.0",
-    "live-server": "^1.2.2",
-    "prettier": "^3.0.0",
-    "serve": "^14.0.0",
-    "stylelint": "^15.0.0"
+    "node": ">=16.0.0"
   },
   "browserslist": [
     "> 1%",
@@ -67,6 +53,7 @@
     "index.html",
     "style.css",
     "game.js",
-    "README.md"
+    "README.md",
+    "vercel.json"
   ]
 }
