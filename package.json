@@ -1,18 +1,16 @@
 {
-  "name": "html5-breakout-game",
+  "name": "neo-breakout-cyberpunk",
   "version": "2.0.0",
-  "description": "A modern, enhanced HTML5 Breakout game with power-ups, particle effects, and mobile support",
+  "description": "A futuristic cyberpunk-themed HTML5 Breakout game powered by Groq AI with advanced graphics, neon effects, and intelligent gameplay",
   "main": "index.html",
+  "type": "module",
   "scripts": {
-    "start": "python -m http.server 8000 || python3 -m http.server 8000 || npx serve .",
-    "dev": "npx live-server --port=8000",
-    "build": "echo 'Static files ready for deployment'",
+    "dev": "vercel dev",
+    "build": "echo 'Build complete - static files ready'",
+    "start": "vercel dev",
     "deploy": "vercel --prod",
-    "test": "echo 'No tests specified yet'"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Gzeu/html5-breakout-game.git"
+    "lint": "eslint *.js",
+    "test": "echo 'Tests coming soon'"
   },
   "keywords": [
     "breakout",
@@ -20,40 +18,57 @@
     "html5",
     "canvas",
     "javascript",
-    "mobile",
-    "touch",
-    "responsive",
-    "pwa",
-    "particles",
-    "power-ups",
-    "arcade",
-    "retro",
-    "web-game"
+    "cyberpunk",
+    "neon",
+    "ai",
+    "groq",
+    "futuristic",
+    "neural",
+    "gaming"
   ],
   "author": {
     "name": "George Pricop",
-    "email": "pricopgeorge@gmail.com",
+    "email": "contact@georgepricop.ro",
     "url": "https://github.com/Gzeu"
   },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gzeu/html5-breakout-game.git"
+  },
   "bugs": {
     "url": "https://github.com/Gzeu/html5-breakout-game/issues"
   },
   "homepage": "https://html5-breakout-game.vercel.app/",
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "groq-sdk": "^0.4.0"
+  },
+  "devDependencies": {
+    "@vercel/node": "^3.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0"
+  },
+  "vercel": {
+    "functions": {
+      "api/groq-ai.js": {
+        "runtime": "nodejs18.x",
+        "maxDuration": 10
+      }
+    },
+    "env": {
+      "GROQ_API_KEY": "@groq-api-key"
+    }
   },
   "browserslist": [
     "> 1%",
     "last 2 versions",
-    "not dead",
-    "not ie 11"
+    "not dead"
   ],
-  "files": [
-    "index.html",
-    "style.css",
-    "game.js",
-    "README.md",
-    "vercel.json"
-  ]
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/Gzeu"
+  }
 }
