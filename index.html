@@ -3,82 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="HTML5 Breakout Game built with JavaScript and Canvas - Features mouse/touch controls, power-ups, and particle effects">
-    <meta name="keywords" content="breakout, game, html5, canvas, javascript, mobile, touch">
+    <meta name="description" content="Neo Breakout - A cyberpunk-themed HTML5 game with Groq AI integration featuring advanced graphics and modern gameplay">
+    <meta name="keywords" content="neo breakout, cyberpunk game, groq ai, html5 canvas, javascript, futuristic">
     <meta name="author" content="George Pricop">
-    <title>HTML5 Breakout Game - Enhanced Edition</title>
+    <title>Neo Breakout - Cyberpunk Edition with Groq AI</title>
     <link rel="stylesheet" href="style.css">
     
     <!-- Favicon and mobile app icons -->
-    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
-    <meta name="theme-color" content="#667eea">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔮</text></svg>">
+    <meta name="theme-color" content="#00ffff">
     
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="HTML5 Breakout Game - Enhanced Edition">
-    <meta property="og:description" content="A modern breakout game with mouse/touch controls, power-ups, and stunning visual effects">
+    <meta property="og:title" content="Neo Breakout - Cyberpunk Edition with AI">
+    <meta property="og:description" content="Experience the future of gaming with this AI-powered cyberpunk breakout game featuring neon graphics and intelligent gameplay">
     <meta property="og:url" content="https://html5-breakout-game.vercel.app/">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <!-- Prevent zoom on mobile -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 </head>
 <body>
+    <div class="cyberpunk-grid"></div>
+    <div class="neon-particles"></div>
+    
     <div class="game-container">
         <header>
-            <h1>🎮 HTML5 Breakout Game</h1>
-            <p class="subtitle">Enhanced Edition with Power-ups & Effects</p>
+            <div class="logo-container">
+                <h1 class="neon-title">🔮 NEO BREAKOUT</h1>
+                <div class="subtitle-container">
+                    <span class="version-tag">v2.0</span>
+                    <p class="subtitle">CYBERPUNK EDITION • GROQ AI POWERED</p>
+                </div>
+            </div>
         </header>
         
         <div class="game-area">
-            <canvas id="gameCanvas" width="480" height="320" aria-label="Breakout Game Canvas"></canvas>
+            <div class="canvas-container">
+                <canvas id="gameCanvas" width="480" height="320" aria-label="Neo Breakout Game Canvas"></canvas>
+                <div class="scan-lines"></div>
+                <div class="screen-overlay"></div>
+            </div>
         </div>
         
         <div class="game-stats">
-            <div class="stat-item">
-                <span class="stat-label">Score:</span>
-                <span id="score" class="stat-value">0</span>
+            <div class="stat-item neon-border">
+                <span class="stat-label">SCORE</span>
+                <span id="score" class="stat-value neon-text">000000</span>
             </div>
-            <div class="stat-item">
-                <span class="stat-label">Lives:</span>
-                <span id="lives" class="stat-value">3</span>
+            <div class="stat-item neon-border">
+                <span class="stat-label">LIVES</span>
+                <span id="lives" class="stat-value neon-text">03</span>
+            </div>
+            <div class="stat-item neon-border ai-toggle" id="aiToggle">
+                <span class="stat-label">AI MODE</span>
+                <span id="aiStatus" class="stat-value neon-text">OFF</span>
             </div>
         </div>
         
-        <div class="instructions">
-            <div class="control-group">
-                <h3>🎯 Controls</h3>
-                <p><kbd>←</kbd> <kbd>→</kbd> Arrow keys or <kbd>A</kbd> <kbd>D</kbd> to move paddle</p>
-                <p>🖱️ Mouse or 👆 Touch to control paddle</p>
+        <div class="control-panel">
+            <div class="control-section">
+                <h3 class="section-title">🎮 NEURAL INTERFACE</h3>
+                <div class="control-grid">
+                    <button class="cyber-btn primary" id="startBtn">
+                        <span class="btn-text">INITIALIZE</span>
+                        <span class="btn-glow"></span>
+                    </button>
+                    <button class="cyber-btn secondary" id="aiBtn">
+                        <span class="btn-text">GROQ AI</span>
+                        <span class="btn-glow"></span>
+                    </button>
+                    <button class="cyber-btn tertiary" id="pauseBtn">
+                        <span class="btn-text">PAUSE</span>
+                        <span class="btn-glow"></span>
+                    </button>
+                </div>
             </div>
             
-            <div class="control-group">
-                <h3>⚡ Power-ups</h3>
-                <div class="powerups-list">
-                    <div class="powerup-item">
-                        <span class="powerup-icon" style="background: #FF6B6B;">M</span>
-                        <span>Multi-Ball Speed</span>
+            <div class="control-section">
+                <h3 class="section-title">⚡ COMMAND PROTOCOLS</h3>
+                <div class="controls-info">
+                    <div class="control-item">
+                        <kbd class="cyber-key">←</kbd>
+                        <kbd class="cyber-key">→</kbd>
+                        <span>Neural Movement</span>
                     </div>
-                    <div class="powerup-item">
-                        <span class="powerup-icon" style="background: #4ECDC4;">L</span>
-                        <span>Larger Paddle</span>
+                    <div class="control-item">
+                        <kbd class="cyber-key">A</kbd>
+                        <kbd class="cyber-key">D</kbd>
+                        <span>Alt Navigation</span>
                     </div>
-                    <div class="powerup-item">
-                        <span class="powerup-icon" style="background: #45B7D1;">S</span>
-                        <span>Slow Ball</span>
+                    <div class="control-item">
+                        <kbd class="cyber-key">I</kbd>
+                        <span>AI Toggle</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="mouse-icon">🔮</span>
+                        <span>Cybernetic Control</span>
                     </div>
                 </div>
             </div>
             
-            <div class="start-hint">
-                <p>🚀 <strong>Click, tap, or press any key to start!</strong></p>
+            <div class="control-section">
+                <h3 class="section-title">🔋 SYSTEM UPGRADES</h3>
+                <div class="powerups-grid">
+                    <div class="powerup-card">
+                        <div class="powerup-icon multi-ball">M</div>
+                        <span class="powerup-name">MULTI-CORE</span>
+                        <span class="powerup-desc">Quantum Ball Split</span>
+                    </div>
+                    <div class="powerup-card">
+                        <div class="powerup-icon large-paddle">L</div>
+                        <span class="powerup-name">AMPLIFIER</span>
+                        <span class="powerup-desc">Paddle Enhancement</span>
+                    </div>
+                    <div class="powerup-card">
+                        <div class="powerup-icon slow-ball">S</div>
+                        <span class="powerup-name">TIME-DILATION</span>
+                        <span class="powerup-desc">Temporal Slowdown</span>
+                    </div>
+                </div>
             </div>
         </div>
         
-        <footer>
-            <p>Built with ❤️ using HTML5 Canvas • <a href="https://github.com/Gzeu/html5-breakout-game" target="_blank" rel="noopener">View on GitHub</a></p>
+        <div class="ai-status-panel" id="aiStatusPanel">
+            <div class="panel-header">
+                <h4>🤖 GROQ AI NEURAL NET</h4>
+                <div class="connection-status" id="connectionStatus">
+                    <span class="status-dot"></span>
+                    <span class="status-text">OFFLINE</span>
+                </div>
+            </div>
+            <div class="ai-metrics">
+                <div class="metric">
+                    <span class="metric-label">CONFIDENCE:</span>
+                    <span class="metric-value" id="aiConfidence">--</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">STRATEGY:</span>
+                    <span class="metric-value" id="aiStrategy">STANDBY</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">RESPONSE TIME:</span>
+                    <span class="metric-value" id="responseTime">--ms</span>
+                </div>
+            </div>
+            <div class="ai-reasoning" id="aiReasoning">
+                <span class="reasoning-label">NEURAL ANALYSIS:</span>
+                <span class="reasoning-text">Awaiting initialization...</span>
+            </div>
+        </div>
+        
+        <footer class="cyber-footer">
+            <div class="footer-content">
+                <p class="footer-text">
+                    <span class="footer-highlight">NEURAL FRAMEWORK</span> • 
+                    Built with quantum HTML5 • 
+                    <a href="https://github.com/Gzeu/html5-breakout-game" target="_blank" rel="noopener" class="neon-link">
+                        <span class="link-icon">🔗</span>
+                        GITHUB REPOSITORY
+                    </a>
+                </p>
+                <div class="tech-stack">
+                    <span class="tech-item">GROQ AI</span>
+                    <span class="tech-item">CANVAS 2D</span>
+                    <span class="tech-item">VERCEL</span>
+                    <span class="tech-item">ES2024</span>
+                </div>
+            </div>
         </footer>
     </div>
     
     <script src="game.js"></script>
+    <script src="groq-ai-client.js"></script>
 </body>
 </html>
