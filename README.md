@@ -7,7 +7,9 @@
 [![Groq AI](https://img.shields.io/badge/Powered%20by-Groq%20AI-ff6b6b?style=for-the-badge)](https://groq.com/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES2024-yellow.svg?style=for-the-badge&logo=javascript)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 
-## 🎮 [**PLAY NOW**](https://html5-breakout-game.vercel.app/) • [**AI DEMO**](https://html5-breakout-game.vercel.app/ai-example.html)
+## 🎮 [**PLAY NOW**](https://html5-breakout-game.vercel.app/)
+
+*Experience the future of gaming with AI-powered gameplay, cyberpunk aesthetics, and neural network decision making.*
 
 ---
 
@@ -28,6 +30,7 @@
 - **Live metrics display** showing confidence and strategy
 - **Fallback local AI** when API is unavailable
 - **Sub-100ms response times** for fluid gameplay
+- **AI toggle** - Switch between human and AI control instantly
 
 ### 🎯 **Enhanced Gameplay**
 - **Multiple control schemes**: Keyboard, mouse, and touch
@@ -142,8 +145,8 @@ groqAI.setDifficulty('medium');
 
 ### **AI Modes**
 - **Manual Mode**: Human player control
-- **AI Mode**: Groq AI takes control
-- **Hybrid Mode**: AI assistance with human override
+- **AI Mode**: Groq AI takes control with real-time decision making
+- **Hybrid Mode**: AI assistance with human override capability
 
 ---
 
@@ -160,7 +163,7 @@ groqAI.setDifficulty('medium');
 
 ### **Backend Integration**
 ```
-├── Vercel Functions    # Serverless API endpoints
+├── Vercel Functions    # Serverless AI endpoints
 ├── Groq SDK          # AI model integration
 ├── CORS Headers       # Cross-origin support
 └── Error Handling     # Graceful fallbacks
@@ -314,11 +317,10 @@ groqAI.setStrategy(currentStrategy);
 
 ```
 neo-breakout/
-├── index.html              # Main game interface
+├── index.html              # Main game interface with AI integration
 ├── game.js                 # Core game engine
 ├── groq-ai-client.js       # AI integration layer
 ├── style.css               # Cyberpunk theme
-├── ai-example.html         # AI demo page
 ├── api/
 │   └── groq-ai.js          # Serverless AI endpoint
 ├── assets/
