@@ -3,22 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="HTML5 Breakout Game built with JavaScript and Canvas">
-    <title>HTML5 Breakout Game</title>
+    <meta name="description" content="HTML5 Breakout Game built with JavaScript and Canvas - Features mouse/touch controls, power-ups, and particle effects">
+    <meta name="keywords" content="breakout, game, html5, canvas, javascript, mobile, touch">
+    <meta name="author" content="George Pricop">
+    <title>HTML5 Breakout Game - Enhanced Edition</title>
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Favicon and mobile app icons -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+    <meta name="theme-color" content="#667eea">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="HTML5 Breakout Game - Enhanced Edition">
+    <meta property="og:description" content="A modern breakout game with mouse/touch controls, power-ups, and stunning visual effects">
+    <meta property="og:url" content="https://html5-breakout-game.vercel.app/">
+    
+    <!-- Prevent zoom on mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 </head>
 <body>
     <div class="game-container">
-        <h1>HTML5 Breakout Game</h1>
-        <canvas id="gameCanvas" width="480" height="320"></canvas>
-        <div class="score">
-            Score: <span id="score">0</span>
+        <header>
+            <h1>🎮 HTML5 Breakout Game</h1>
+            <p class="subtitle">Enhanced Edition with Power-ups & Effects</p>
+        </header>
+        
+        <div class="game-area">
+            <canvas id="gameCanvas" width="480" height="320" aria-label="Breakout Game Canvas"></canvas>
         </div>
+        
+        <div class="game-stats">
+            <div class="stat-item">
+                <span class="stat-label">Score:</span>
+                <span id="score" class="stat-value">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Lives:</span>
+                <span id="lives" class="stat-value">3</span>
+            </div>
+        </div>
+        
         <div class="instructions">
-            <p>Use ← → arrow keys to move the paddle</p>
-            <p>Press any key to start the game</p>
+            <div class="control-group">
+                <h3>🎯 Controls</h3>
+                <p><kbd>←</kbd> <kbd>→</kbd> Arrow keys or <kbd>A</kbd> <kbd>D</kbd> to move paddle</p>
+                <p>🖱️ Mouse or 👆 Touch to control paddle</p>
+            </div>
+            
+            <div class="control-group">
+                <h3>⚡ Power-ups</h3>
+                <div class="powerups-list">
+                    <div class="powerup-item">
+                        <span class="powerup-icon" style="background: #FF6B6B;">M</span>
+                        <span>Multi-Ball Speed</span>
+                    </div>
+                    <div class="powerup-item">
+                        <span class="powerup-icon" style="background: #4ECDC4;">L</span>
+                        <span>Larger Paddle</span>
+                    </div>
+                    <div class="powerup-item">
+                        <span class="powerup-icon" style="background: #45B7D1;">S</span>
+                        <span>Slow Ball</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="start-hint">
+                <p>🚀 <strong>Click, tap, or press any key to start!</strong></p>
+            </div>
         </div>
+        
+        <footer>
+            <p>Built with ❤️ using HTML5 Canvas • <a href="https://github.com/Gzeu/html5-breakout-game" target="_blank" rel="noopener">View on GitHub</a></p>
+        </footer>
     </div>
+    
     <script src="game.js"></script>
 </body>
 </html>
